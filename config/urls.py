@@ -20,6 +20,10 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 urlpatterns = [
     path("admin/", admin.site.urls),
+    # Rutas con trailing slash (recomendado)
     path("api/auth/login/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("api/auth/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
+    # Rutas sin trailing slash (para compatibilidad)
+    path("api/auth/login", TokenObtainPairView.as_view(), name="token_obtain_pair_no_slash"),
+    path("api/auth/refresh", TokenRefreshView.as_view(), name="token_refresh_no_slash"),
 ]

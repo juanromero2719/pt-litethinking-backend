@@ -29,7 +29,13 @@ SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-tyn)xy))il06rn$m@pcanvvcrs
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else ["*"]
+# ALLOWED_HOSTS - permite todos en desarrollo, específicos en producción
+allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "")
+if allowed_hosts_env:
+    ALLOWED_HOSTS = [host.strip() for host in allowed_hosts_env.split(",") if host.strip()]
+else:
+    # En desarrollo, permitir todos
+    ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -40,10 +46,25 @@ REST_FRAMEWORK = {
     ),
 }
 
-CORS_ALLOWED_ORIGINS = os.getenv(
-    "CORS_ALLOWED_ORIGINS", 
-    "http://localhost:3000"
-).split(",") if os.getenv("CORS_ALLOWED_ORIGINS") else ["http://localhost:3000"]
+# CORS configuration
+cors_origins_env = os.getenv("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+if cors_origins_env:
+    # Split by comma and strip whitespace, filter out empty strings
+    CORS_ALLOWED_ORIGINS = [
+        origin.strip() 
+        for origin in cors_origins_env.split(",") 
+        if origin.strip()
+    ]
+    # Validate that all origins have a scheme
+    for origin in CORS_ALLOWED_ORIGINS:
+        if not origin.startswith(("http://", "https://")):
+            raise ValueError(
+                f"CORS origin '{origin}' must include a scheme (http:// or https://). "
+                f"Found in CORS_ALLOWED_ORIGINS: {cors_origins_env}"
+            )
+else:
+    CORS_ALLOWED_ORIGINS = ["http://localhost:3000"]
+
 CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS = [
@@ -62,7 +83,6 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
-    "django.middleware.common.CommonMiddleware",
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -71,6 +91,9 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+# Mantener APPEND_SLASH=True (default) para compatibilidad
+# Pero asegúrate de usar URLs con trailing slash en las APIs
 
 ROOT_URLCONF = 'config.urls'
 
