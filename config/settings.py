@@ -24,12 +24,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-tyn)xy))il06rn$m@pcanvvcrs+4#fv4jd@^fvzy)@=yd(&9ji'
+SECRET_KEY = os.getenv("SECRET_KEY", "django-insecure-tyn)xy))il06rn$m@pcanvvcrs+4#fv4jd@^fvzy)@=yd(&9ji")
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else ["*"]
 
 
 # Application definition
@@ -40,9 +40,10 @@ REST_FRAMEWORK = {
     ),
 }
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-]
+CORS_ALLOWED_ORIGINS = os.getenv(
+    "CORS_ALLOWED_ORIGINS", 
+    "http://localhost:3000"
+).split(",") if os.getenv("CORS_ALLOWED_ORIGINS") else ["http://localhost:3000"]
 CORS_ALLOW_CREDENTIALS = True
 
 INSTALLED_APPS = [
