@@ -20,6 +20,18 @@ git commit -m "Preparado para Vercel"
 git push
 ```
 
+### 1.5. Generar SECRET_KEY (Opcional pero Recomendado)
+
+Puedes generar una SECRET_KEY usando el script incluido:
+
+```bash
+# Con Poetry:
+poetry run python generate_secret_key.py
+
+# O directamente:
+poetry run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+```
+
 ### 2. Configurar Variables de Entorno en Vercel
 
 En el dashboard de Vercel, ve a tu proyecto → Settings → Environment Variables y agrega:
@@ -37,7 +49,17 @@ CORS_ALLOWED_ORIGINS=https://tu-frontend.vercel.app,http://localhost:3000
 ```
 
 **Importante:** 
-- Genera un nuevo `SECRET_KEY` para producción (puedes usar: `python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"`)
+- Genera un nuevo `SECRET_KEY` para producción:
+  ```bash
+  # Si usas Poetry (recomendado):
+  poetry run python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+  
+  # Si usas Python directamente:
+  python -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+  
+  # O en Windows con py:
+  py -c "from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())"
+  ```
 - Reemplaza `tu-proyecto.vercel.app` con tu dominio real de Vercel
 - Reemplaza `tu-frontend.vercel.app` con el dominio de tu frontend
 
@@ -90,6 +112,25 @@ Una vez desplegado, verifica que:
 4. **Archivos estáticos**: Considera usar un CDN para archivos estáticos grandes
 
 ## 🐛 Solución de Problemas
+
+### Error: "TypeError: issubclass() arg 1 must be a class"
+Este error indica que Vercel no está reconociendo correctamente el handler. Soluciones:
+
+1. **Verifica que `api/index.py` exporte `app` directamente:**
+   ```python
+   from config.wsgi import application
+   app = application
+   ```
+
+2. **Asegúrate de que `vercel.json` esté en la raíz del proyecto Django**
+
+3. **Verifica que el `Root Directory` en Vercel apunte a `LiteThinking`** (si tu proyecto está en una subcarpeta)
+
+4. **Si el error persiste**, intenta usar el formato alternativo en `api/index.py`:
+   ```python
+   # Exportar directamente sin wrapper
+   app = application
+   ```
 
 ### Error: "Module not found"
 - Verifica que `requirements.txt` tenga todas las dependencias
