@@ -20,6 +20,7 @@ from litethinking.presentation.api.producto.views import (
     producto_detail,
     producto_generar_descripcion,
     productos_list_create,
+    productos_por_empresa,
 )
 
 urlpatterns = [
@@ -36,6 +37,8 @@ urlpatterns = [
     path("api/empresas", empresas_list_create, name="empresas_list_create_no_slash"),
     path("api/empresas/<str:nit>/", empresa_detail, name="empresa_detail"),
     path("api/empresas/<str:nit>", empresa_detail, name="empresa_detail_no_slash"),
+    path("api/empresas/<str:nit>/productos/", productos_por_empresa, name="productos_por_empresa"),
+    path("api/empresas/<str:nit>/productos", productos_por_empresa, name="productos_por_empresa_no_slash"),
     # Productos
     path("api/productos/", productos_list_create, name="productos_list_create"),
     path("api/productos", productos_list_create, name="productos_list_create_no_slash"),

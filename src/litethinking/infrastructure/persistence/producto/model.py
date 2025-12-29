@@ -7,6 +7,7 @@ class ProductoModel(models.Model):
     codigo = models.CharField("Código", max_length=50, primary_key=True)
     nombre = models.CharField("Nombre del producto", max_length=255)
     caracteristicas = models.TextField("Características", blank=True)
+    descripcion = models.TextField("Descripción", blank=True, null=True)
 
     empresa = models.ForeignKey(
         EmpresaModel,

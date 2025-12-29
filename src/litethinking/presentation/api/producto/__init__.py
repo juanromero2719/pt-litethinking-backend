@@ -7,6 +7,7 @@ from .views import (
     producto_detail,
     producto_generar_descripcion,
     productos_list_create,
+    productos_por_empresa,
 )
 
 __all__ = [
@@ -16,5 +17,6 @@ __all__ = [
     'producto_detail',
     'producto_generar_descripcion',
     'productos_list_create',
+    'productos_por_empresa',
 ]
 

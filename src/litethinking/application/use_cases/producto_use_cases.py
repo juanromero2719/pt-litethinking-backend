@@ -21,7 +21,8 @@ class CrearProductoUseCase:
         codigo: str,
         nombre: str,
         empresa_nit: str,
-        caracteristicas: Optional[str] = None
+        caracteristicas: Optional[str] = None,
+        descripcion: Optional[str] = None
     ) -> Producto:
        
         if self._producto_repository.existe(codigo):
@@ -34,7 +35,8 @@ class CrearProductoUseCase:
             codigo=codigo,
             nombre=nombre,
             empresa_nit=empresa_nit,
-            caracteristicas=caracteristicas
+            caracteristicas=caracteristicas,
+            descripcion=descripcion
         )
         
         return self._producto_repository.guardar(producto)

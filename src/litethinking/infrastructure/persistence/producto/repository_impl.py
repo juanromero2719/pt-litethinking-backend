@@ -13,6 +13,7 @@ class DjangoProductoRepository(ProductoRepository):
             defaults={
                 'nombre': producto.nombre,
                 'caracteristicas': producto.caracteristicas,
+                'descripcion': producto.descripcion,
                 'empresa_id': producto.empresa_nit,
             }
         )
@@ -67,6 +68,7 @@ class DjangoProductoRepository(ProductoRepository):
             nombre=producto_model.nombre,
             empresa_nit=producto_model.empresa_id,
             caracteristicas=producto_model.caracteristicas,
+            descripcion=producto_model.descripcion or "",
             precios=precios
         )
 

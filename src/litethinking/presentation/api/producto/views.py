@@ -43,6 +43,7 @@ def productos_list_create(request):
                 nombre=request.data.get('nombre'),
                 empresa_nit=request.data.get('empresa_nit'),
                 caracteristicas=request.data.get('caracteristicas'),
+                descripcion=request.data.get('descripcion'),
             )
             serializer = ProductoSerializer(producto)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -179,4 +180,14 @@ def producto_generar_descripcion(request):
             {'error': f'Error al generar la descripción: {str(e)}'},
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated, IsAdmin])
+def productos_por_empresa(request, nit):
+    """Lista todos los productos de una empresa específica"""
+    use_case = ListarProductosUseCase(producto_repository)
+    productos = use_case.ejecutar(empresa_nit=nit)
+    serializer = ProductoSerializer(productos, many=True)
+    return Response(serializer.data)
 

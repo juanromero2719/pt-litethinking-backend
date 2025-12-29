@@ -19,6 +19,7 @@ class ProductoSerializer(serializers.Serializer):
     nombre = serializers.CharField(max_length=255)
     empresa_nit = serializers.CharField(max_length=20)
     caracteristicas = serializers.CharField(allow_blank=True, required=False)
+    descripcion = serializers.CharField(allow_blank=True, required=False)
     precios = ProductoPrecioSerializer(many=True, required=False)
     
     def to_representation(self, instance: Producto):
@@ -27,6 +28,7 @@ class ProductoSerializer(serializers.Serializer):
             'nombre': instance.nombre,
             'empresa_nit': instance.empresa_nit,
             'caracteristicas': instance.caracteristicas,
+            'descripcion': instance.descripcion,
             'precios': [
                 ProductoPrecioSerializer().to_representation(precio)
                 for precio in instance.precios

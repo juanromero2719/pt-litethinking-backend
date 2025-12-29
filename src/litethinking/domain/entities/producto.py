@@ -59,6 +59,7 @@ class Producto:
         nombre: str,
         empresa_nit: str,
         caracteristicas: Optional[str] = None,
+        descripcion: Optional[str] = None,
         precios: Optional[List[ProductoPrecio]] = None
     ):
         
@@ -70,6 +71,7 @@ class Producto:
         self.nombre = nombre
         self.empresa_nit = empresa_nit
         self.caracteristicas = caracteristicas or ""
+        self.descripcion = descripcion or ""
         self.precios = precios or []
     
     def _validar_codigo(self, codigo: str) -> None:
