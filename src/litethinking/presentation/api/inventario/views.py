@@ -1,6 +1,5 @@
 from datetime import datetime
 from io import BytesIO
-import logging
 import os
 import threading
 import re
@@ -18,10 +17,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
-# Configurar logger
-logger = logging.getLogger(__name__)
-
 from ....application.use_cases.empresa_use_cases import ObtenerEmpresaUseCase
+from ..permissions import IsAdmin
 from ....application.use_cases.producto_use_cases import ListarProductosUseCase
 from ....infrastructure.persistence.empresa.repository_impl import DjangoEmpresaRepository
 from ....infrastructure.persistence.producto.repository_impl import DjangoProductoRepository
@@ -36,56 +33,23 @@ def _validar_email(email: str) -> bool:
 
 
 def _enviar_pdf_por_correo(pdf_content: bytes, empresa_nit: str, empresa_nombre: str, email_destino: str, fecha_generacion: str):
-    """
-    Envía el PDF del inventario por correo electrónico.
-    Esta función incluye logging detallado para depuración.
-    """
-    logger.info(f"[EMAIL] Iniciando envío de correo a {email_destino}")
-    logger.info(f"[EMAIL] Empresa: {empresa_nombre} (NIT: {empresa_nit})")
-    logger.info(f"[EMAIL] Tamaño del PDF: {len(pdf_content)} bytes")
-    
+    """Envía el PDF del inventario por correo electrónico."""
     try:
-        # Verificar configuración de email
-        logger.info("[EMAIL] Verificando configuración de email...")
         email_from = settings.DEFAULT_FROM_EMAIL
-        email_host = settings.EMAIL_HOST
-        email_port = settings.EMAIL_PORT
-        email_user = settings.EMAIL_HOST_USER
-        email_use_tls = settings.EMAIL_USE_TLS
-        email_use_ssl = settings.EMAIL_USE_SSL
-        
-        logger.info(f"[EMAIL] EMAIL_HOST: {email_host}")
-        logger.info(f"[EMAIL] EMAIL_PORT: {email_port}")
-        logger.info(f"[EMAIL] EMAIL_USE_TLS: {email_use_tls}")
-        logger.info(f"[EMAIL] EMAIL_USE_SSL: {email_use_ssl}")
-        logger.info(f"[EMAIL] EMAIL_HOST_USER: {email_user[:3] + '***' if email_user else 'NO CONFIGURADO'}")
-        logger.info(f"[EMAIL] DEFAULT_FROM_EMAIL: {email_from}")
-        
         if not email_from or not email_from.strip():
-            error_msg = "DEFAULT_FROM_EMAIL no está configurado"
-            logger.error(f"[EMAIL] ERROR: {error_msg}")
             raise ValueError(
                 "La configuración de email no está completa. "
                 "Por favor, configure EMAIL_HOST_USER o DEFAULT_FROM_EMAIL en las variables de entorno."
             )
         
-        if not email_user or not email_user.strip():
-            error_msg = "EMAIL_HOST_USER no está configurado"
-            logger.error(f"[EMAIL] ERROR: {error_msg}")
+        if not settings.EMAIL_HOST_USER or not settings.EMAIL_HOST_USER.strip():
             raise ValueError("EMAIL_HOST_USER no está configurado en las variables de entorno.")
         
         if not settings.EMAIL_HOST_PASSWORD:
-            error_msg = "EMAIL_HOST_PASSWORD no está configurado"
-            logger.error(f"[EMAIL] ERROR: {error_msg}")
             raise ValueError("EMAIL_HOST_PASSWORD no está configurado en las variables de entorno.")
         
-        logger.info("[EMAIL] Configuración de email válida")
-        
         filename = f'inventario_{empresa_nit}_{fecha_generacion}.pdf'
-        logger.info(f"[EMAIL] Nombre del archivo: {filename}")
         
-        # Crear el mensaje de correo
-        logger.info("[EMAIL] Creando mensaje de correo...")
         email = EmailMessage(
             subject=f'Inventario de Productos - {empresa_nombre}',
             body=f'''
@@ -104,24 +68,10 @@ Sistema LiteThinking
             to=[email_destino],
         )
         
-        logger.info(f"[EMAIL] Adjuntando PDF ({len(pdf_content)} bytes)...")
         email.attach(filename, pdf_content, 'application/pdf')
+        email.send()
         
-        logger.info(f"[EMAIL] Enviando correo desde {email_from} a {email_destino}...")
-        resultado = email.send()
-        logger.info(f"[EMAIL] Correo enviado exitosamente. Resultado: {resultado}")
-        logger.info(f"[EMAIL] El correo debería llegar a {email_destino} en breve")
-        
-    except ValueError as e:
-        logger.error(f"[EMAIL] ERROR DE VALIDACIÓN: {str(e)}")
-        logger.error(f"[EMAIL] Traceback: {repr(e)}")
-        raise
     except Exception as e:
-        logger.error(f"[EMAIL] ERROR AL ENVIAR CORREO: {str(e)}")
-        logger.error(f"[EMAIL] Tipo de error: {type(e).__name__}")
-        logger.error(f"[EMAIL] Traceback completo: {repr(e)}")
-        import traceback
-        logger.error(f"[EMAIL] Traceback detallado:\n{traceback.format_exc()}")
         raise
 
 
@@ -225,7 +175,7 @@ def _generar_pdf_inventario(empresa, productos, fecha_generacion_formateada: str
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdmin])
 def generar_inventario_pdf(request, empresa_nit):
 
     try:
@@ -257,38 +207,26 @@ def generar_inventario_pdf(request, empresa_nit):
         pdf = _generar_pdf_inventario(empresa, productos, fecha_generacion_formateada)
         
         if enviar_por_correo:
-            logger.info(f"[INVENTARIO] Preparando envío de correo a {email_destino}")
-            logger.info(f"[INVENTARIO] PDF generado: {len(pdf)} bytes")
-            
-            # En Vercel/serverless, los threads pueden no completarse antes de que termine la función
-            # Por eso intentamos enviar de forma síncrona primero, y si falla, usamos thread
+
             is_vercel = os.getenv('VERCEL', '').lower() == '1' or 'vercel' in os.getenv('SERVER_SOFTWARE', '').lower()
             
             if is_vercel:
-                logger.info("[INVENTARIO] Detectado entorno Vercel - enviando correo de forma síncrona")
                 try:
                     _enviar_pdf_por_correo(pdf, empresa_nit, empresa.nombre, email_destino, fecha_generacion)
-                    logger.info("[INVENTARIO] Correo enviado exitosamente de forma síncrona")
                 except Exception as e:
-                    logger.error(f"[INVENTARIO] Error al enviar correo de forma síncrona: {str(e)}")
-                    # Intentar con thread como fallback
-                    logger.info("[INVENTARIO] Intentando con thread como fallback...")
                     thread = threading.Thread(
                         target=_enviar_pdf_por_correo,
                         args=(pdf, empresa_nit, empresa.nombre, email_destino, fecha_generacion),
-                        daemon=False  # Cambiar a False para que el thread complete
+                        daemon=False
                     )
                     thread.start()
-                    logger.info("[INVENTARIO] Thread de envío iniciado")
             else:
-                logger.info("[INVENTARIO] Entorno local - usando thread para envío asíncrono")
                 thread = threading.Thread(
                     target=_enviar_pdf_por_correo,
                     args=(pdf, empresa_nit, empresa.nombre, email_destino, fecha_generacion),
                     daemon=True
                 )
                 thread.start()
-                logger.info("[INVENTARIO] Thread de envío iniciado")
             
             return Response(
                 {

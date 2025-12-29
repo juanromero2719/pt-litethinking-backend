@@ -11,12 +11,13 @@ from ....application.use_cases.empresa_use_cases import (
     ObtenerEmpresaUseCase,
 )
 from ....infrastructure.persistence.empresa.repository_impl import DjangoEmpresaRepository
+from ..permissions import IsAdminOrReadOnly, IsAdmin
 from .serializer import EmpresaSerializer
 
 empresa_repository = DjangoEmpresaRepository()
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdminOrReadOnly])
 def empresas_list_create(request):
     if request.method == 'GET':
         use_case = ListarEmpresasUseCase(empresa_repository)
@@ -25,7 +26,6 @@ def empresas_list_create(request):
         return Response(serializer.data)
     
     elif request.method == 'POST':
-
         serializer = EmpresaSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
@@ -45,7 +45,7 @@ def empresas_list_create(request):
 
 
 @api_view(['GET', 'PUT', 'DELETE'])
-@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated, IsAdminOrReadOnly])
 def empresa_detail(request, nit):
     if request.method == 'GET':
         use_case = ObtenerEmpresaUseCase(empresa_repository)
@@ -56,7 +56,6 @@ def empresa_detail(request, nit):
         return Response(serializer.data)
     
     elif request.method == 'PUT':
-        # Validar datos de entrada con el serializer
         serializer = EmpresaSerializer(data=request.data)
         if not serializer.is_valid():
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
