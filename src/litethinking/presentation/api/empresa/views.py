@@ -1,3 +1,4 @@
+from django.db.models import ProtectedError
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated
@@ -74,9 +75,15 @@ def empresa_detail(request, nit):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
     elif request.method == 'DELETE':
-        use_case = EliminarEmpresaUseCase(empresa_repository)
-        eliminado = use_case.ejecutar(nit)
-        if not eliminado:
-            return Response({'error': 'Empresa no encontrada'}, status=status.HTTP_404_NOT_FOUND)
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        try:
+            use_case = EliminarEmpresaUseCase(empresa_repository)
+            eliminado = use_case.ejecutar(nit)
+            if not eliminado:
+                return Response({'error': 'Empresa no encontrada'}, status=status.HTTP_404_NOT_FOUND)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        except ProtectedError:
+            return Response(
+                {'error': 'No es posible eliminar esta empresa mientras tenga productos asociados.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
 

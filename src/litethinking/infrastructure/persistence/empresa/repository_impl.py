@@ -39,6 +39,8 @@ class DjangoEmpresaRepository(EmpresaRepository):
             return True
         except EmpresaModel.DoesNotExist:
             return False
+        except Exception as e:
+            raise
     
     def existe(self, nit: str) -> bool:
         return EmpresaModel.objects.filter(nit=nit).exists()
