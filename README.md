@@ -2,6 +2,8 @@
 
 Proyecto desplegado en: https://pt-litethinking-backend.vercel.app
 
+Si quieres revisar los endpoints desde postman importa a traves de este enlace: https://proyecto-go.postman.co/workspace/backend-park~b8432539-c22b-4ea8-a3b2-57c73f79249f/collection/34876563-0cc298dd-b19d-4a7b-b6c1-9a10b405c48b?action=share&source=copy-link&creator=34876563
+
 API REST desarrollada con Django y Django REST Framework, implementando **Clean Architecture** para gestionar empresas y productos con autenticación JWT y control de acceso basado en roles.
 
 ## 📋 Tabla de Contenidos
