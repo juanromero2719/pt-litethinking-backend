@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal
 from enum import Enum
 from typing import List, Optional
@@ -80,6 +81,13 @@ class Producto:
             raise ValueError("El código del producto es requerido")
         if len(codigo) > 50:
             raise ValueError("El código no puede exceder 50 caracteres")
+        
+        codigo_pattern = re.compile(r'^[A-Za-z]+-\d+$')
+        if not codigo_pattern.match(codigo.strip()):
+            raise ValueError(
+                "El código debe seguir el formato 'nombre-numero' (ej: PROD-001, LAPTOP-123). "
+                "Solo se permiten letras, un guion y números."
+            )
     
     def _validar_nombre(self, nombre: str) -> None:
         

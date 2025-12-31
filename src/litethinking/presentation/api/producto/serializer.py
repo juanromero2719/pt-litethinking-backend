@@ -1,3 +1,4 @@
+import re
 from rest_framework import serializers
 
 from ....domain.entities.producto import Moneda, Producto, ProductoPrecio
@@ -21,6 +22,20 @@ class ProductoSerializer(serializers.Serializer):
     caracteristicas = serializers.CharField(allow_blank=True, required=False)
     descripcion = serializers.CharField(allow_blank=True, required=False)
     precios = ProductoPrecioSerializer(many=True, required=False)
+    
+    def validate_codigo(self, value):
+        """Valida que el código siga el formato nombre-numero"""
+        if not value or not value.strip():
+            raise serializers.ValidationError("El código del producto es requerido")
+        
+        codigo_pattern = re.compile(r'^[A-Za-z]+-\d+$')
+        if not codigo_pattern.match(value.strip()):
+            raise serializers.ValidationError(
+                "El código debe seguir el formato 'nombre-numero' (ej: PROD-001, LAPTOP-123). "
+                "Solo se permiten letras, un guion y números."
+            )
+        
+        return value.strip()
     
     def to_representation(self, instance: Producto):
         return {
