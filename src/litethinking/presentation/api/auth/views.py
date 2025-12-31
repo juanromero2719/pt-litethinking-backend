@@ -8,7 +8,22 @@ from .serializer import RegistroSerializer
 
 
 class LoginView(TokenObtainPairView):
-    pass
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        
+        if response.status_code == 200:
+            from django.contrib.auth import authenticate
+            username = request.data.get('username')
+            password = request.data.get('password')
+            user = authenticate(username=username, password=password)
+            
+            if user:
+                grupos = user.groups.all()
+                rol = grupos.first().name if grupos.exists() else None
+                
+                response.data['rol'] = rol
+        
+        return response
 
 
 class RefreshTokenView(TokenRefreshView):
@@ -26,12 +41,10 @@ def registro(request):
     try:
         usuario = serializer.save()
         
-        # Asignar el grupo "Externo" por defecto
         try:
             grupo_externo = Group.objects.get(name='Externo')
             usuario.groups.add(grupo_externo)
         except Group.DoesNotExist:
-            # Si el grupo no existe, crearlo
             grupo_externo = Group.objects.create(name='Externo')
             usuario.groups.add(grupo_externo)
         

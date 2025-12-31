@@ -52,7 +52,7 @@ def productos_list_create(request):
 
 
 @api_view(['GET', 'DELETE'])
-@permission_classes([IsAuthenticated, IsAdmin])
+@permission_classes([IsAuthenticated])
 def producto_detail(request, codigo):
     if request.method == 'GET':
         use_case = ObtenerProductoUseCase(producto_repository)
@@ -183,9 +183,8 @@ def producto_generar_descripcion(request):
 
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated, IsAdmin])
+@permission_classes([IsAuthenticated])
 def productos_por_empresa(request, nit):
-    """Lista todos los productos de una empresa específica"""
     use_case = ListarProductosUseCase(producto_repository)
     productos = use_case.ejecutar(empresa_nit=nit)
     serializer = ProductoSerializer(productos, many=True)
